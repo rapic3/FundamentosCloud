@@ -1,0 +1,751 @@
+﻿@{
+    ViewData["Title"] = "Vista Personalizada";
+    Layout = "_Layout";
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía: CRUD con Firebase en .NET Core 9 (3 Capas)</title>
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --secondary-color: #34a853;
+            --background-color: #f8f9fa;
+            --text-color: #333;
+            --border-color: #ddd;
+            --code-bg: #f5f5f5;
+            --code-text: #d63384;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        
+        h2 {
+            color: var(--secondary-color);
+            margin-top: 30px;
+            padding-left: 15px;
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        h3 {
+            color: #555;
+            margin-top: 20px;
+        }
+        
+        .step {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 5px solid var(--primary-color);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        
+        .step-title {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        
+        pre {
+            background: var(--code-bg);
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: var(--code-text);
+        }
+        
+        code {
+            background: var(--code-bg);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: var(--code-text);
+        }
+        
+        .code-block {
+            margin: 15px 0;
+        }
+        
+        .code-block pre {
+            margin: 0;
+        }
+        
+        .note {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+            font-style: italic;
+        }
+        
+        .note::before {
+            content: "⚠️ ";
+        }
+        
+        .success {
+            background: #d4edda;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid var(--secondary-color);
+            margin: 15px 0;
+        }
+        
+        .success::before {
+            content: "✅ ";
+        }
+        
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 30px;
+        }
+        
+        li {
+            margin: 8px 0;
+        }
+        
+        .file-path {
+            font-family: 'Courier New', monospace;
+            color: #666;
+            font-size: 0.9em;
+            margin: 10px 0 5px 0;
+        }
+        
+        .section {
+            margin: 30px 0;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 5px;
+            font-weight: bold;
+        }
+        
+        .btn:hover {
+            background: #3367d6;
+        }
+        
+        .architecture-diagram {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .architecture-diagram img {
+            max-width: 100%;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+        
+        .layer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin: 10px 0;
+            background: #f0f4f8;
+            border-radius: 8px;
+        }
+        
+        .layer-box {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            margin: 0 10px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .arrow {
+            font-size: 2em;
+            color: #999;
+        }
+        
+        .dependencies {
+            background: #f0f4f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .dependencies h4 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+        
+        .dependencies ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .dependencies li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Guía: CRUD con Firebase en .NET Core 9 (3 Capas)</h1>
+        
+
+        <!-- Arquitectura -->
+        <div class="section">
+            <h2>🏗️ Arquitectura de la Aplicación</h2>
+            <div class="architecture-diagram">
+                <div class="layer">
+                    <div class="layer-box">
+                        <strong>Capa MVC</strong>
+                        <p>Controladores y Vistas</p>
+                    </div>
+                    <span class="arrow">→</span>
+                    <div class="layer-box">
+                        <strong>Capa Negocio</strong>
+                        <p>Lógica de negocio y servicios</p>
+                    </div>
+                    <span class="arrow">→</span>
+                    <div class="layer-box">
+                        <strong>Capa Repositorio</strong>
+                        <p>Acceso a Firebase</p>
+                    </div>
+                    <span class="arrow">→</span>
+                    <div class="layer-box">
+                        <strong>Firebase</strong>
+                        <p>Firestore Database</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Requisitos -->
+        <div class="section">
+            <h2>📋 Requisitos Previos</h2>
+            <div class="step">
+                <div class="step-title">Paso 1: Configura el entorno</div>
+                <p>Asegúrate de tener instalado:</p>
+                <ul>
+                    <li><code>Visual Studio 2022 o posterior</code></li>
+                    <li><code>.NET SDK 9.0</code> (o la versión más reciente)</li>
+                    <li>Una cuenta de <a href="https://firebase.google.com/" target="_blank">Firebase</a></li>
+                </ul>
+                <div class="note">
+                    <p><strong>Importante:</strong> Descarga el archivo <code>google-services.json</code> desde Firebase Console y colócalo en la capa de Repositorio.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estructura del Proyecto -->
+        <div class="section">
+            <h2>📁 Estructura del Proyecto</h2>
+            <div class="step">
+                <div class="step-title">Paso 2: Crea la estructura del proyecto</div>
+                <p>Organiza tu solución en 3 proyectos separados:</p>
+                <pre>
+FundCloud.sln
+├── Wwb (Proyecto MVC)
+├── Negocio (Capa de Negocio)
+└── Repositorio (Capa de Repositorio)
+                </pre>
+                <p><strong>Instrucciones:</strong></p>
+                <ol>
+                    <li>Abre Visual Studio y crea una <code>Solución en blanco</code> llamada <code>FundCloud</code>.</li>
+                    <li>Agrega un proyecto <code>Aplicación web ASP.NET Core</code> (MVC) llamado <code>Wwb</code>.</li>
+                    <li>Agrega dos proyectos de <code>Biblioteca de clases (.NET Standard)</code> llamados <code>Negocio</code> y <code>Repositorio</code>.</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Dependencias -->
+        <div class="section">
+            <h2>📦 Configuración de Dependencias</h2>
+            <div class="step">
+                <div class="step-title">Paso 3: Instala los paquetes NuGet necesarios</div>
+                
+                <div class="dependencies">
+                    <h4>📌 Capa Repositorio (<code>Repositorio</code>)</h4>
+                    <p>Ejecuta estos comandos en la <strong>Consola del Administrador de Paquetes</strong>:</p>
+                    <pre>
+Install-Package FirebaseAdmin -Version 3.2.0
+Install-Package Google.Cloud.Firestore -Version 3.2.0
+                    </pre>
+                </div>
+                
+                <div class="dependencies">
+                    <h4>📌 Referencias entre proyectos</h4>
+                    <ul>
+                        <li><code>Negocio</code> → Referencia a <code>Repositorio</code></li>
+                        <li><code>Wwb (MVC)</code> → Referencia a <code>Negocio</code></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuración de Firebase -->
+        <div class="section">
+            <h2>🔥 Configuración de Firebase</h2>
+            <div class="step">
+                <div class="step-title">Paso 4: Inicializa Firebase</div>
+                <div class="file-path">Repositorio/Services/FirebaseService.cs</div>
+                <div class="code-block">
+                    <pre>
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
+using System.IO;
+
+namespace Repositorio
+{
+    public static class FirebaseService
+    {
+        public static void Initialize()
+        {
+            if (FirebaseApp.DefaultInstance == null)
+            {
+                var jsonCredentials = File.ReadAllText("google-services.json");
+                FirebaseApp.Create(new AppOptions()
+                {
+                    Credential = GoogleCredential.FromJson(jsonCredentials),
+                    ProjectId = "tu-id-de-proyecto"
+                });
+            }
+        }
+    }
+}
+                    </pre>
+                </div>
+                <div class="note">
+                    <p><strong>Nota:</strong> Asegúrate de que el archivo <code>google-services.json</code> esté marcado como <code>Copiar en el directorio de salida</code>.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modelo User -->
+        <div class="section">
+            <h2>📝 Modelo de Datos: Usuario</h2>
+            <div class="step">
+                <div class="step-title">Paso 5: Implementa el modelo Usuario</div>
+                <div class="file-path">Repositorio/Dominio/Usuario.cs</div>
+                <div class="code-block">
+                    <pre>
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+
+namespace Repositorio.Dominio
+{
+{
+    [FirestoreData] 
+    public class Usuario
+    {
+        [FirestoreDocumentId] 
+        public string Id { get; set; }
+
+        [FirestoreProperty("Name")]
+        public string Name { get; set; }
+
+        [FirestoreProperty("LastName")] 
+        public string LastName { get; set; }
+
+        [FirestoreProperty("Phone")]
+        public string Phone { get; set; }
+
+        [FirestoreProperty("Age")]
+        public int Age { get; set; }
+    }
+}
+                    </pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Capa Repositorio -->
+        <div class="section">
+            <h2>🗃️ Capa Repositorio</h2>
+            
+            <div class="step">
+                <div class="step-title">Interfaz IUsuarioRepositorio</div>
+                <div class="file-path">Repositorio/Interfaces/IUsuarioRepositorio.cs</div>
+                <div class="code-block">
+                    <pre>
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Repositorio.Dominio;
+
+namespace Repositorio
+{
+    public interface IUsuarioRepositorio
+    {
+        Task&lt;List&lt;User&gt;&gt; GetAllUsuarioAsync();
+        Task&lt;User&gt; GetUsuarioByIdAsync(string id);
+        Task CreateUsuarioAsync(Usuario user);
+        Task UpdateUsuarioAsync(Usuario user);
+        Task DeleteUsuarioAsync(string id);
+    }
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">Implementación UsuarioRepositorio</div>
+                <div class="file-path">Repositorio/UsuarioRepositorio.cs</div>
+                <div class="code-block">
+                    <pre>
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Google.Cloud.Firestore;
+using Repositorio.Dominio;
+using Repositorio.Interfaces;
+
+namespace Repositorio
+{
+    public class UsuarioRepositorio : IUsuarioRepositorio
+    {
+        private readonly FirestoreDb _firestoreDb;
+
+        public UsuarioRepositorio()
+        {
+            FirebaseService.Initialize();
+            _firestoreDb = FirestoreDb.Create("tu-id-de-proyecto");
+        }
+
+        public async Task&lt;List&lt;User&gt;&gt; GetAllUsersAsync()
+        {
+            var usersRef = _firestoreDb.Collection("users");
+            var snapshot = await usersRef.GetSnapshotAsync();
+            var users = new List&lt;User&gt;();
+            
+            foreach (var document in snapshot.Documents)
+            {
+                users.Add(document.ConvertTo&lt;User&gt;());
+            }
+            return users;
+        }
+
+        public async Task&lt;User&gt; GetUserByIdAsync(string id)
+        {
+            var userDoc = _firestoreDb.Collection("users").Document(id);
+            var snapshot = await userDoc.GetSnapshotAsync();
+            return snapshot.Exists ? snapshot.ConvertTo&lt;User&gt;() : null;
+        }
+
+        public async Task CreateUserAsync(User user)
+        {
+            var userRef = _firestoreDb.Collection("users").Document(user.Id);
+            await userRef.SetAsync(user);
+        }
+
+        public async Task UpdateUserAsync(User user)
+        {
+            var userRef = _firestoreDb.Collection("users").Document(user.Id);
+            await userRef.SetAsync(user, SetOptions.MergeAll);
+        }
+
+        public async Task DeleteUserAsync(string id)
+        {
+            var userRef = _firestoreDb.Collection("users").Document(id);
+            await userRef.DeleteAsync();
+        }
+    }
+}
+                    </pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Capa Negocio -->
+        <div class="section">
+            <h2>💼 Capa Negocio</h2>
+            
+            <div class="step">
+                <div class="step-title">Interfaz IUserNegocio</div>
+                <div class="file-path">Negocio/IUserNegocio.cs</div>
+                <div class="code-block">
+                    <pre>
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Repositorio.Dominio;
+
+namespace Negocio
+{
+    public interface IUserNegocio
+    {
+        Task&lt;List&lt;User&gt;&gt; GetAllUsersAsync();
+        Task&lt;User&gt; GetUserByIdAsync(string id);
+        Task CreateUserAsync(User user);
+        Task UpdateUserAsync(User user);
+        Task DeleteUserAsync(string id);
+    }
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">Implementación UserNegocio</div>
+                <div class="file-path">Negocio/UserNegocio.cs</div>
+                <div class="code-block">
+                    <pre>
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Repositorio.Interfaces;
+using Repositorio.Dominio;
+using Negocio.Interfaces;
+
+namespace Negocio.Services
+{
+    public class UserNegocio : IUserNegocio
+    {
+        private readonly IUsuarioRepositorio _userRepository;
+
+        public UserNegocio(IUsuarioRepositorio userRepository)
+        {
+            _userRepository = userRepository;
+        }
+
+        public async Task&lt;List&lt;User&gt;&gt; GetAllUsersAsync()
+        {
+            return await _userRepository.GetAllUsersAsync();
+        }
+
+        public async Task&lt;User&gt; GetUserByIdAsync(string id)
+        {
+            return await _userRepository.GetUserByIdAsync(id);
+        }
+
+        public async Task CreateUserAsync(User user)
+        {
+            await _userRepository.CreateUserAsync(user);
+        }
+
+        public async Task UpdateUserAsync(User user)
+        {
+            await _userRepository.UpdateUserAsync(user);
+        }
+
+        public async Task DeleteUserAsync(string id)
+        {
+            await _userRepository.DeleteUserAsync(id);
+        }
+    }
+}
+                    </pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Capa MVC -->
+        <div class="section">
+            <h2>🖥️ Capa MVC</h2>
+            
+            <div class="step">
+                <div class="step-title">Controlador UsersController</div>
+                <div class="file-path">Wwb/Controllers/UsersController.cs</div>
+                <div class="code-block">
+                    <pre>
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Negocio.Interfaces;
+using Repositorio.Dominio;
+
+namespace Wwb.Controllers
+{
+    public class UsersController : Controller
+    {
+        private readonly IUserNegocio _UserNegocio;
+
+        public UsersController(IUserNegocio UserNegocio)
+        {
+            _UserNegocio = UserNegocio;
+        }
+
+        public async Task&lt;IActionResult&gt; Index()
+        {
+            var users = await _UserNegocio.GetAllUsersAsync();
+            return View(users);
+        }
+
+        public IActionResult Create()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task&lt;IActionResult&gt; Create([Bind("Id,Name,LastName,Phone,Age")] User user)
+        {
+            if (ModelState.IsValid)
+            {
+                await _UserNegocio.CreateUserAsync(user);
+                return RedirectToAction(nameof(Index));
+            }
+            return View(user);
+        }
+
+        public async Task&lt;IActionResult&gt; Edit(string id)
+        {
+            var user = await _UserNegocio.GetUserByIdAsync(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+            return View(user);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task&lt;IActionResult&gt; Edit(string id, [Bind("Id,Name,LastName,Phone,Age")] User user)
+        {
+            if (id != user.Id)
+            {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                await _UserNegocio.UpdateUserAsync(user);
+                return RedirectToAction(nameof(Index));
+            }
+            return View(user);
+        }
+
+        public async Task&lt;IActionResult&gt; Delete(string id)
+        {
+            var user = await _UserNegocio.GetUserByIdAsync(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+            return View(user);
+        }
+
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task&lt;IActionResult&gt; DeleteConfirmed(string id)
+        {
+            await _UserNegocio.DeleteUserAsync(id);
+            return RedirectToAction(nameof(Index));
+        }
+    }
+}
+                    </pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vistas -->
+        <div class="section">
+            <h2>🎨 Vistas</h2>
+            
+            <div class="step">
+                <div class="step-title">Index.cshtml</div>
+                <div class="file-path">Wwb/Views/Users/Index.cshtml</div>
+                <div class="step-title">Create.cshtml</div>
+                <div class="file-path">Wwb/Views/Users/Create.cshtml</div>
+                <div class="step-title">Edit.cshtml</div>
+                <div class="file-path">Wwb/Views/Users/Edit.cshtml</div>
+                <div class="step-title">Delete.cshtml</div>
+                <div class="file-path">Wwb/Views/Users/Delete.cshtml</div>
+            </div>
+        </div>
+
+        <!-- Configuración de DI -->
+        <div class="section">
+            <h2>⚙️ Configuración de Dependency Injection</h2>
+            <div class="step">
+                <div class="step-title">Program.cs</div>
+                <div class="file-path">Wwb/Program.cs</div>
+                <div class="code-block">
+                    <pre>
+using Negocio.Interfaces;
+using Negocio.Services;
+using Repositorio.Interfaces;
+using Repositorio.Repositories;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+b.builder.Services.AddControllersWithViews();
+
+// Configurar Dependency Injection
+builder.Services.AddScoped&lt;IUsuarioRepositorio, UserRepository&gt;();
+b.builder.Services.AddScoped&lt;IUserNegocio, UserNegocio&gt;();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.Run();
+                    </pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ejecución -->
+        <div class="section">
+            <h2>🚀 Ejecución del Proyecto</h2>
+            <div class="step">
+                <div class="step-title">Paso 9: Ejecuta el proyecto</div>
+                <ol>
+                    <li>Compila la solución (<code>Ctrl + Shift + B</code>).</li>
+                    <li>Ejecuta el proyecto (<code>F5</code>).</li>
+                    <li>Abre tu navegador y navega a <code>https://localhost:5001/Users</code>.</li>
+                </ol>
+                <div class="success">
+                    <p><strong>¡Listo!</strong> Ahora deberías ver la interfaz de CRUD funcionando con Firebase como backend.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
